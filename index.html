@@ -37,6 +37,21 @@
             <div id="categoryGrid" class="category-grid"></div>
         </section>
 
+        <section id="playMenuScreen" class="screen fon2">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('menuScreen')">🏠 Меню</button></div>
+            <div class="category-grid">
+                <button class="cat-btn" onclick="app.startSnake()">🐍 Змійка</button>
+                <button class="cat-btn" onclick="app.startBubbles()">🎈 Кульки</button>
+                <button class="cat-btn" onclick="app.startMath()">➕ Математика</button>
+                <button class="cat-btn" onclick="app.startMole()">🐹 Кріт</button>
+                <button class="cat-btn" onclick="app.startTanks()">🚀 Танчики</button>
+                <button class="cat-btn" onclick="app.startFindExtra()">🔍 Зайве</button>
+                <button class="cat-btn" onclick="app.startMaze()">🌀 Лабіринт</button>
+                <button class="cat-btn" onclick="app.startDraw()">🎨 Малювання</button>
+                <button class="cat-btn" onclick="app.showGallery()">🖼️ Галерея</button>
+            </div>
+        </section>
+
         <section id="learnScreen" class="screen fon3">
             <div class="header">
                 <button class="back-btn" onclick="app.showScreen('categoriesScreen')">⬅ Назад</button>
@@ -61,20 +76,9 @@
         </section>
 
         <section id="quizScreen" class="screen fon1">
-            <div class="header"><button class="back-btn" onclick="app.showScreen('categoriesScreen')">❌ Вийти</button></div>
+            <div class="header"><button class="back-btn" onclick="app.showScreen('playMenuScreen')">❌ Вийти</button></div>
             <h2 id="quizQuestion" class="quiz-title"></h2>
             <div id="quizOptions" class="quiz-grid"></div>
-        </section>
-
-        <section id="playMenuScreen" class="screen fon2">
-            <div class="header"><button class="back-btn" onclick="app.showScreen('menuScreen')">🏠 Меню</button></div>
-            <div class="category-grid">
-                <button class="cat-btn" onclick="app.startSnake()">🐍 Змійка</button>
-                <button class="cat-btn" onclick="app.startBubbles()">🎈 Кульки</button>
-                <button class="cat-btn" onclick="app.startMath()">➕ Математика</button>
-                <button class="cat-btn" onclick="app.startDraw()">🎨 Малювання</button>
-                <button class="cat-btn" onclick="app.showGallery()">🖼️ Галерея</button>
-            </div>
         </section>
 
         <section id="galleryScreen" class="screen fon3">
@@ -104,15 +108,17 @@
             </div>
         </section>
     </div>
+
     <script src="script.js"></script>
+
     <div id="customConfirm" class="confirm-overlay" style="display:none;">
-    <div class="confirm-card">
-        <p id="confirmText">Ти впевнений?</p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn green" id="confirmYes">Так</button>
-            <button class="btn red" id="confirmNo" style="background:#ff5252;">Ні</button>
+        <div class="confirm-card">
+            <p id="confirmText">Ти впевнений?</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn main-btn" id="confirmYes" style="background:#4ecdc4;">Так</button>
+                <button class="btn main-btn" id="confirmNo" style="background:#ff7675;">Ні</button>
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>
