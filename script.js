@@ -85,33 +85,128 @@ const app = {
 
     // --- ІГРИ ---
 
-    startMole() {
-        this.showScreen('canvasScreen'); const cvs = document.getElementById('gameCanvas'); cvs.style.display = 'block';
-        const ctx = cvs.getContext('2d'); cvs.width = 300; cvs.height = 400;
-        let score = 0, total = 0; let mole = { x: 0, y: 0, active: false };
-        const img = new Image(); img.src = `images/${this.user.ava}`;
-        
-        this.timer = setInterval(() => {
-            ctx.clearRect(0,0,300,400);
-            if (!mole.active) {
-                mole.x = 50 + Math.random() * 200; mole.y = 50 + Math.random() * 300; mole.active = true;
-                total++;
-                setTimeout(() => mole.active = false, 1000);
-            }
-            if (mole.active) ctx.drawImage(img, mole.x-35, mole.y-35, 70, 70);
-            document.getElementById('gameStat').innerText = `Спіймано: ${score} / 15`;
-            
-            if(total > 15) { 
-                clearInterval(this.timer); 
-                alert(`Гра закінчена! Твій результат: ${score}`); 
-                this.addCoins(score * 2); this.showScreen('playMenuScreen'); 
-            }
-        }, 1100);
+startMole() {
+        this.showScreen('canvasScreen');
+        const cvs = document.getElementById('gameCanvas');
+        cvs.style.display = 'block';
+        const ctx = cvs.getContext('2d');
+        cvs.width = 300;
+        cvs.height = 400;
 
+        let score = 0;
+        let objects = []; // Тут будуть і кроти, і бомби
+        let gameActive = true;
+        let totalSpawned = 0;
+        const maxObjects = 20; // Скільки всього об'єктів з'явиться за гру
+
+        const avatarImg = new Image();
+        avatarImg.src = `images/${this.user.ava}`;
+
+        // Створення нового об'єкта (або кріт, або бомба)
+        const spawnObject = () => {
+            if (totalSpawned >= maxObjects) return;
+            
+            const isBomb = Math.random() < 0.3; // 30% шансу, що випаде бомба
+            objects.push({
+                x: 50 + Math.random() * 200,
+                y: 50 + Math.random() * 300,
+                size: 0,        // Починаємо з нульового розміру для анімації
+                maxSize: 70,
+                type: isBomb ? 'bomb' : 'mole',
+                state: 'growing', // growing, waiting, shrinking, hit
+                timer: 0,
+                lifeTime: 1000 + Math.random() * 1000 // скільки часу він висить
+            });
+            totalSpawned++;
+        };
+
+        this.timer = setInterval(() => {
+            if (!gameActive) return;
+
+            ctx.clearRect(0, 0, 300, 400);
+
+            // Шанс на появу нового об'єкта
+            if (Math.random() < 0.03 && objects.length < 3) spawnObject();
+
+            for (let i = objects.length - 1; i >= 0; i--) {
+                let obj = objects[i];
+
+                // --- ЛОГІКА АНІМАЦІЇ ---
+                if (obj.state === 'growing') {
+                    obj.size += 5;
+                    if (obj.size >= obj.maxSize) obj.state = 'waiting';
+                } else if (obj.state === 'waiting') {
+                    obj.timer += 30;
+                    if (obj.timer >= obj.lifeTime) obj.state = 'shrinking';
+                } else if (obj.state === 'shrinking') {
+                    obj.size -= 5;
+                    if (obj.size <= 0) objects.splice(i, 1);
+                } else if (obj.state === 'hit') {
+                    obj.size += 10; // Ефект «вибуху» при попаданні
+                    ctx.globalAlpha = 0.5;
+                    if (obj.size > 120) objects.splice(i, 1);
+                }
+
+                // --- МАЛЮВАННЯ ---
+                ctx.save();
+                ctx.translate(obj.x, obj.y);
+                
+                if (obj.state === 'hit') {
+                    ctx.font = "50px Arial";
+                    ctx.fillText(obj.type === 'mole' ? "✨" : "💥", -25, 25);
+                } else {
+                    if (obj.type === 'mole') {
+                        // Малюємо аватарку
+                        ctx.beginPath();
+                        ctx.arc(0, 0, obj.size / 2, 0, Math.PI * 2);
+                        ctx.clip();
+                        ctx.drawImage(avatarImg, -obj.size / 2, -obj.size / 2, obj.size, obj.size);
+                    } else {
+                        // Малюємо бомбу
+                        ctx.font = `${obj.size}px Arial`;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText("💣", 0, 0);
+                    }
+                }
+                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
+
+            document.getElementById('gameStat').innerText = `Рахунок: ${score} | Лишилось: ${maxObjects - totalSpawned}`;
+
+            // Перевірка кінця гри
+            if (totalSpawned >= maxObjects && objects.length === 0) {
+                gameActive = false;
+                clearInterval(this.timer);
+                setTimeout(() => {
+                    alert(`Гру закінчено! Ти зібрав ${score} монет! 💰`);
+                    this.addCoins(score);
+                    this.showScreen('playMenuScreen');
+                }, 500);
+            }
+        }, 30);
+
+        // Обробка кліків
         cvs.onmousedown = (e) => {
-            const r = cvs.getBoundingClientRect(); 
-            const mx = (e.clientX - r.left) * (300/r.width), my = (e.clientY - r.top) * (400/r.height);
-            if (mole.active && Math.hypot(mx - mole.x, my - mole.y) < 45) { mole.active = false; score++; }
+            if (!gameActive) return;
+            const r = cvs.getBoundingClientRect();
+            const mx = (e.clientX - r.left) * (300 / r.width);
+            const my = (e.clientY - r.top) * (400 / r.height);
+
+            for (let obj of objects) {
+                if (obj.state !== 'hit' && Math.hypot(mx - obj.x, my - obj.y) < 40) {
+                    if (obj.type === 'mole') {
+                        score += 2; // За кріта +2
+                        obj.state = 'hit';
+                    } else {
+                        score = Math.max(0, score - 5); // За бомбу -5
+                        obj.state = 'hit';
+                        this.showError(); // Візуальний ефект помилки з твого коду
+                    }
+                    break;
+                }
+            }
         };
     },
 
@@ -123,52 +218,65 @@ startMaze() {
         cvs.width = 300;
         cvs.height = 300;
 
-        let px = 20, py = 20; // Позиція гравця
-        const size = 15; // Розмір гравця
+        let px = 25, py = 25; // Початкова позиція
+        const radius = 12;
 
-        // Створюємо стіни як лабіринт-сітку, щоб завжди був шлях
-        const walls = [
-            // Рамка лабіринту
-            {x: 0, y: 50, w: 220, h: 15},
-            {x: 80, y: 100, w: 220, h: 15},
-            {x: 0, y: 150, w: 120, h: 15},
-            {x: 180, y: 150, w: 120, h: 15},
-            {x: 60, y: 200, w: 240, h: 15},
-            {x: 0, y: 250, w: 150, h: 15},
-            // Вертикальні перегородки
-            {x: 120, y: 150, w: 15, h: 60},
-            {x: 240, y: 0, w: 15, h: 60}
-        ];
-
-        // Кожного разу трохи змінюємо довжину стін, щоб лабіринт був різним
-        walls.forEach(w => {
-            if (w.w > 50) w.w += (Math.random() * 40 - 20);
+        // ГЕНЕРАТОР ВИПАДКОВИХ СТІН (Кожного разу нові!)
+        const walls = [];
+        const rows = [60, 120, 180, 240]; // Рівні поверхів лабіринту
+        
+        rows.forEach(y => {
+            // Робимо випадкову дірку в стіні, щоб можна було пройти
+            const holeX = Math.random() * 240; 
+            const holeWidth = 50;
+            
+            // Стіна зліва від дірки
+            if (holeX > 0) walls.push({x: 0, y: y, w: holeX, h: 15});
+            // Стіна справа від дірки
+            if (holeX + holeWidth < 300) walls.push({x: holeX + holeWidth, y: y, w: 300 - (holeX + holeWidth), h: 15});
         });
 
-        const checkCollision = (nx, ny) => {
-            // Перевірка меж екрану
-            if (nx < size || nx > 300 - size || ny < size || ny > 300 - size) return true;
+        // Додамо пару вертикальних перешкод для складності
+        for(let i=0; i<2; i++) {
+            walls.push({
+                x: 50 + Math.random() * 200,
+                y: 20 + Math.random() * 200,
+                w: 15,
+                h: 50
+            });
+        }
+
+        const isHit = (nx, ny) => {
+            // Межі екрану
+            if (nx < radius || nx > 300 - radius || ny < radius || ny > 300 - radius) return true;
             // Перевірка стін
-            return walls.some(w => 
-                nx + size/2 > w.x && nx - size/2 < w.x + w.w &&
-                ny + size/2 > w.y && ny - size/2 < w.y + w.h
-            );
+            for (let w of walls) {
+                if (nx + radius > w.x && nx - radius < w.x + w.w &&
+                    ny + radius > w.y && ny - radius < w.y + w.h) {
+                    return true;
+                }
+            }
+            return false;
         };
 
         const move = (e) => {
             const r = cvs.getBoundingClientRect();
-            const mx = ((e.clientX || (e.touches && e.touches[0].clientX)) - r.left) * (300 / r.width);
-            const my = ((e.clientY || (e.touches && e.touches[0].clientY)) - r.top) * (300 / r.height);
+            const targetX = ((e.clientX || (e.touches && e.touches[0].clientX)) - r.left) * (300 / r.width);
+            const targetY = ((e.clientY || (e.touches && e.touches[0].clientY)) - r.top) * (300 / r.height);
 
-            // Плавний рух з перевіркою колізії
-            if (!checkCollision(mx, my)) {
-                px = mx;
-                py = my;
+            // Тільки якщо шлях вільний, оновлюємо позицію
+            if (!isHit(targetX, targetY)) {
+                px = targetX;
+                py = targetY;
+            } else {
+                // Ковзання вздовж стін
+                if (!isHit(targetX, py)) px = targetX;
+                else if (!isHit(px, targetY)) py = targetY;
             }
 
             if (px > 260 && py > 260) {
                 clearInterval(this.timer);
-                alert("Круто! Ти пройшов цей лабіринт! +15💰");
+                alert("🎁 Перемога! Тримай монети!");
                 this.addCoins(15);
                 this.showScreen('playMenuScreen');
             }
@@ -190,20 +298,19 @@ startMaze() {
             });
 
             // Фініш
-            ctx.fillStyle = "#f1c40f";
             ctx.font = "30px Arial";
-            ctx.fillText("🎁", 265, 290);
+            ctx.fillText("🎁", 260, 290);
 
-            // Гравець (твій персонаж)
+            // Гравець
             ctx.fillStyle = "#ff6b6b";
             ctx.beginPath();
-            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.arc(px, py, radius, 0, 7);
             ctx.fill();
             ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            document.getElementById('gameStat').innerText = "Знайди шлях до подарунка!";
+            document.getElementById('gameStat').innerText = "Знайди прохід!";
         }, 30);
     },
 
@@ -278,6 +385,8 @@ startMaze() {
     },
 
     startSnake() {
+        const eatSound = new Audio('images/zvuk.mp3');
+        eatSound.preload = 'auto';
         this.showScreen('canvasScreen'); const cvs = document.getElementById('gameCanvas'); cvs.style.display = 'block';
         const ctx = cvs.getContext('2d'); cvs.width = 300; cvs.height = 300;
         let snake = [{x:150, y:150}], angle = 0, turn = 0.1, food = {x:200, y:200}, score = 0;
@@ -296,21 +405,110 @@ startMaze() {
         }, 30);
     },
 
-    startBubbles() {
-        this.showScreen('canvasScreen'); const cvs = document.getElementById('gameCanvas'); cvs.style.display = 'block';
-        const ctx = cvs.getContext('2d'); cvs.width = 300; cvs.height = 400;
-        let score = 0; this.bubbles = [];
+startBubbles() {
+        const popSoundEffect = new Audio('24e2d7eac96d361.mp3');
+        popSoundEffect.preload = 'auto';
+        this.showScreen('canvasScreen');
+        const cvs = document.getElementById('gameCanvas');
+        cvs.style.display = 'block';
+        const ctx = cvs.getContext('2d');
+        cvs.width = 300;
+        cvs.height = 400;
+
+        let score = 0;
+        this.bubbles = [];
+        let particles = []; // Для ефекту вибуху
+        const popSound = new Audio('24e2d7eac96d361.mp3');
+
         this.timer = setInterval(() => {
-            ctx.clearRect(0,0,300, 400);
-            if(Math.random()<0.06) this.bubbles.push({x:Math.random()*300, y:450, r:25, c:`hsl(${Math.random()*360},70%,60%)`, s:3+Math.random()*3});
-            this.bubbles.forEach((b,i) => { b.y -= b.s; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fillStyle = b.c; ctx.fill(); if(b.y < -50) this.bubbles.splice(i,1); });
+            ctx.clearRect(0, 0, 300, 400);
+
+            // Поява нових кульок
+            if (Math.random() < 0.06 && this.bubbles.length < 8) {
+                this.bubbles.push({
+                    x: Math.random() * 260 + 20,
+                    y: 450,
+                    r: 25 + Math.random() * 10,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                    speed: 2 + Math.random() * 3,
+                    swing: Math.random() * 2, // погойдування
+                    offset: Math.random() * 100
+                });
+            }
+
+            // Малюємо і рухаємо кульки
+            this.bubbles.forEach((b, i) => {
+                b.y -= b.speed;
+                b.x += Math.sin(b.y / 30 + b.offset) * b.swing; // плавне погойдування
+
+                // Малюємо мотузочку
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y + b.r);
+                ctx.lineTo(b.x, b.y + b.r + 20);
+                ctx.strokeStyle = "#888";
+                ctx.stroke();
+
+                // Малюємо саму кульку (градієнт для об'єму)
+                let grad = ctx.createRadialGradient(b.x - b.r/3, b.y - b.r/3, b.r/10, b.x, b.y, b.r);
+                grad.addColorStop(0, "white");
+                grad.addColorStop(0.2, b.color);
+                grad.addColorStop(1, "black");
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                if (b.y < -50) this.bubbles.splice(i, 1);
+            });
+
+            // Ефект частинок (лопання)
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.05;
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, 7);
+                ctx.fill();
+                if (p.alpha <= 0) particles.splice(i, 1);
+            });
+            ctx.globalAlpha = 1.0;
+
             document.getElementById('gameStat').innerText = "Рахунок: " + score;
         }, 30);
+
         cvs.onmousedown = (e) => {
-            const r = cvs.getBoundingClientRect(); const mx = (e.clientX - r.left) * (300/r.width), my = (e.clientY - r.top) * (400/r.height);
-            this.bubbles.forEach((b,i) => { if(Math.hypot(mx-b.x, my-b.y) < b.r) { this.bubbles.splice(i,1); score++; this.addCoins(1); } });
+            const r = cvs.getBoundingClientRect();
+            const mx = (e.clientX - r.left) * (300 / r.width);
+            const my = (e.clientY - r.top) * (400 / r.height);
+
+            this.bubbles.forEach((b, i) => {
+                if (Math.hypot(mx - b.x, my - b.y) < b.r) {
+                    // Граємо звук
+                    popSound.currentTime = 0;
+                    popSound.play().catch(e => console.log("Увімкни взаємодію для звуку"));
+
+                    // Створюємо частинки вибуху
+                    for(let j=0; j<10; j++) {
+                        particles.push({
+                            x: b.x, y: b.y,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            color: b.color,
+                            alpha: 1
+                        });
+                    }
+
+                    this.bubbles.splice(i, 1);
+                    score++;
+                    this.addCoins(1);
+                }
+            });
         };
     },
+
 
     // --- МАЛЮВАННЯ ТА ГАЛЕРЕЯ ---
 

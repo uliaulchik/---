@@ -189,3 +189,45 @@ button, .btn, .cat-btn, .nav-btn, .del-draw-btn {
     width: 100%;
     max-width: 600px;
 } 
+/* Контейнер для кнопок гортання */
+.nav-controls {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* Відстань між лівою і правою кнопкою */
+    margin-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* Стиль самих кнопок-стрілок */
+.nav-btn {
+    width: 80px;  /* Велика ширина */
+    height: 80px; /* Велика висота */
+    font-size: 35px; /* Розмір самої стрілки всередині */
+    background-color: #54a0ff; /* Гарний помаранчевий колір */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Робимо кнопки круглими */
+    cursor: pointer;
+    box-shadow: 0 6px 0 #2e86de; /* 3D ефект (тінь знизу) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Ефект при натисканні */
+.nav-btn:active {
+    transform: translateY(4px); /* Кнопка ніби вдавлюється */
+    box-shadow: 0 2px 0 #4571a8;
+}
+
+/* Колір для правої кнопки можна зробити іншим, щоб розрізняти */
+.nav-btn:nth-child(2) {
+    background-color: #54a0ff;
+    box-shadow: 0 6px 0 #2e86de;
+}
+.nav-btn:nth-child(2):active {
+    box-shadow: 0 2px 0 #2e86de;
+}
