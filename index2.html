@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Дитячий Світ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="errorPopup" class="error-popup">Упс! Спробуй ще раз ❌</div>
+
+        <section id="regScreen" class="screen main-fon">
+            <div class="card">
+                <h1>Твій профіль 👋</h1>
+                <div id="avaPicker" class="ava-grid"></div>
+                <input type="text" id="userName" placeholder="Твоє ім'я" maxlength="12">
+                <button class="btn main-btn" onclick="app.register()">Зберегти</button>
+                <button class="reset-btn" onclick="app.resetProfile()">❌ Видалити профіль</button>
+            </div>
+        </section>
+
+        <section id="menuScreen" class="screen fon1">
+            <div class="header">
+                <div class="user-info" onclick="app.showScreen('regScreen')">
+                    <img id="userAva" src="images/ava1.jpg" class="mini-ava">
+                    <span id="playerTitle"></span> ⚙️
+                </div>
+                <div class="coins">💰 <span id="coins">0</span></div>
+            </div>
+            <button class="btn learn-btn" onclick="app.showScreen('categoriesScreen')">📚 Навчайся</button>
+            <button class="btn play-btn" onclick="app.showScreen('playMenuScreen')">🎮 Грай</button>
+        </section>
+
+        <section id="categoriesScreen" class="screen fon2">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('menuScreen')">🏠 Меню</button></div>
+            <div id="categoryGrid" class="category-grid"></div>
+        </section>
+
+        <section id="learnScreen" class="screen fon3">
+            <div class="header">
+                <button class="back-btn" onclick="app.showScreen('categoriesScreen')">⬅ Назад</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="back-btn" style="background:#ff9f43; color:white;" onclick="app.startMatchGame()">🧩 Пари</button>
+                    <button class="back-btn" style="background:#4ecdc4; color:white;" onclick="app.startQuiz()">🧠 Тест</button>
+                </div>
+            </div>
+            <div id="learnContent" class="card"></div>
+            <div class="nav-controls">
+                <button class="nav-btn" onclick="app.prevCard()">⬅</button>
+                <button class="nav-btn" onclick="app.nextCard()">➡</button>
+            </div>
+        </section>
+
+        <section id="matchScreen" class="screen fon4">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('learnScreen')">⬅ Назад</button></div>
+            <div id="matchGameArea">
+                <div id="matchWords" class="match-column"></div>
+                <div id="matchImages" class="match-column"></div>
+            </div>
+        </section>
+
+        <section id="quizScreen" class="screen fon1">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('categoriesScreen')">❌ Вийти</button></div>
+            <h2 id="quizQuestion" class="quiz-title"></h2>
+            <div id="quizOptions" class="quiz-grid"></div>
+        </section>
+
+        <section id="playMenuScreen" class="screen fon2">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('menuScreen')">🏠 Меню</button></div>
+            <div class="category-grid">
+                <button class="cat-btn" onclick="app.startSnake()">🐍 Змійка</button>
+                <button class="cat-btn" onclick="app.startBubbles()">🎈 Кульки</button>
+                <button class="cat-btn" onclick="app.startMath()">➕ Математика</button>
+                <button class="cat-btn" onclick="app.startDraw()">🎨 Малювання</button>
+                <button class="cat-btn" onclick="app.showGallery()">🖼️ Галерея</button>
+            </div>
+        </section>
+
+        <section id="galleryScreen" class="screen fon3">
+            <div class="header"><button class="back-btn" onclick="app.showScreen('playMenuScreen')">⬅ Назад</button></div>
+            <div id="galleryGrid" class="gallery-grid"></div>
+        </section>
+
+        <section id="canvasScreen" class="screen fon4">
+            <div class="header">
+                <button class="back-btn" onclick="app.showScreen('playMenuScreen')">⬅ Назад</button>
+                <div id="gameStat">Очки: 0</div>
+            </div>
+            <div id="gameContainer" style="position:relative; width:100%; display: flex; justify-content: center;">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+            <div id="paintTools" class="paint-tools" style="display:none;">
+                <div id="colorsRow" style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;"></div>
+                <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
+                    <button class="tool-btn" onclick="app.brushColor='white'">🧽 Ластик</button>
+                    <button class="tool-btn" onclick="app.saveDrawing()">💾 Зберегти</button>
+                    <button class="tool-btn" onclick="app.clearCanvas()">🗑️ Очистити</button>
+                </div>
+            </div>
+            <div id="mathArea" class="card" style="display:none; margin: 0 auto;">
+                <h1 id="mathProblem" style="font-size: 60px; margin: 20px 0;"></h1>
+                <div id="mathOptions" class="quiz-grid"></div>
+            </div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+    <div id="customConfirm" class="confirm-overlay" style="display:none;">
+    <div class="confirm-card">
+        <p id="confirmText">Ти впевнений?</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn green" id="confirmYes">Так</button>
+            <button class="btn red" id="confirmNo" style="background:#ff5252;">Ні</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
